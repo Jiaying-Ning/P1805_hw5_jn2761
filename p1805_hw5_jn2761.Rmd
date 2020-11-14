@@ -1,0 +1,6 @@
+---
+title: "P1805_hw5_jn2761"
+author: "jiaying Ning"
+date: "11/14/2020"
+output: html_document
+---
