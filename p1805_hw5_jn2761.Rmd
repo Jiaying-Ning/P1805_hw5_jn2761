@@ -4,3 +4,95 @@ author: "jiaying Ning"
 date: "11/14/2020"
 output: html_document
 ---
+
+
+```{r setup, include=FALSE}
+#loading package
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(dplyr)
+library(ggridges)
+
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+    fig.asp = .6,
+  out.width = "90%"
+
+)
+
+theme_set(theme_minimal()+theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_color_discrete = scale_color_viridis_d
+scale_fill_discrete =scale_fill_viridis_d
+```
+
+```{r}
+library(purrr)
+```
+
+
+## problem 2
+
+```{r}
+df=
+tibble(
+ file_name= list.files(path="data")
+)
+
+```
+
+
+```{r}
+data1 = read_csv("data/con_01.csv")
+
+path_df=
+ tibble(
+    path = list.files("data"),
+  ) %>% 
+  mutate(
+    path = str_c("data/", path))
+
+
+ read_csv(path_df$path[[1]])
+ path_df
+ 
+```
+
+
+```{r}
+
+output = vector("list", 20)
+
+
+  for (i in 1:20){
+  output[[i]] = read_csv(path_df$path[[i]])
+  }
+
+df = bind_rows(output)
+
+df = map_df(vec_urls, read_page_reviews)
+
+
+```
+
+```{r, error = TRUE}
+path_df = 
+  tibble(
+    path = list.files("data"),
+  ) %>% 
+  mutate(
+    path = str_c("data/", path),
+    data = map(.............))
+
+
+read_csv(path_df$path[[1]])
+```
+
+
