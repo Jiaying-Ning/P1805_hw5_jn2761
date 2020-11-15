@@ -40,59 +40,42 @@ library(purrr)
 
 ## problem 2
 
-```{r}
-df=
-tibble(
- file_name= list.files(path="data")
-)
-
-```
-
-
-```{r}
-data1 = read_csv("data/con_01.csv")
-
-path_df=
- tibble(
-    path = list.files("data"),
-  ) %>% 
-  mutate(
-    path = str_c("data/", path))
-
-
- read_csv(path_df$path[[1]])
- path_df
- 
-```
-
-
-```{r}
-
-output = vector("list", 20)
-
-
-  for (i in 1:20){
-  output[[i]] = read_csv(path_df$path[[i]])
-  }
-
-df = bind_rows(output)
-
-df = map_df(vec_urls, read_page_reviews)
-
-
-```
 
 ```{r, error = TRUE}
-path_df = 
+df = 
   tibble(
     path = list.files("data"),
   ) %>% 
   mutate(
     path = str_c("data/", path),
-    data = map(.............))
+    data = map(path,read.csv)) %>%
+  unnest() %>% 
+   mutate(path=gsub("data/","",path),
+          path=gsub(".csv","",path)) %>%
+   separate(path, c("control_arm","subject_id"), sep = "([_])") %>%
+  relocate(subject_id,control_arm) %>%
+   pivot_longer(
+    week_1:week_8,
+    names_to = "week", 
+    names_prefix = "week_",
+    values_to = "observation")
 
 
-read_csv(path_df$path[[1]])
 ```
+
+
+```{r}
+df %>%
+  filter(control_arm =="con") 
+```
+```{r}
+df %>%
+  group_by(subject_id)%>%
+  ggplot(aes(x=week,y=observation,group=subject_id,color=subject_id))+
+  geom_line() +
+  stat_smooth(aes(group = 1),method = "lm", se = FALSE)+
+  facet_grid(. ~ control_arm)
+```
+Overall, observation value seems to be higher as time pass by for the experimental group, and there seems to no correlation between time and observations for the control group.
 
 
