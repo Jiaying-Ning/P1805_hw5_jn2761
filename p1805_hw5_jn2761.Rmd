@@ -183,7 +183,7 @@ tibble(
   mu_c =c(1:7)
 ) %>%
   mutate(
-    output_list = map(.x = mu_c-1,~rerun(1000,sim_norm(mu=.x))), #function inside of a function #rerun a 100 times
+    output_list = map(.x = mu_c-1,~rerun(5000,sim_norm(mu=.x))), #function inside of a function #rerun a 100 times
     estmate_df = map(output_list, bind_rows)
   )  %>%
   select(-output_list) %>% #i dont want this anymore 
@@ -207,24 +207,7 @@ sample_results%>%
 
 ```
 
-```{r}
-sample_results%>%
-  mutate(decision = ifelse(p.value<0.05,"reject","accept"),
-          mu_c=mu_c-1)%>%
-  group_by(mu_c,decision) %>%
-  filter(decision=="reject") %>%
-  summarise(n_reject=n()) %>%
-  ggplot(aes(x=mu_c, y=n_reject,fill=mu_c)) + 
-  geom_bar(stat = "identity") +
-  scale_x_continuous(
-    breaks = c(0:6))+ 
-  labs(titles = "the number of time null-hypothesis is rejected",
-        x = "true value of μ",
-       y= "number of rejection with null mean=0") +
-  theme(legend.position = "right")
-  
 
-```
 
 
 ```{r}
