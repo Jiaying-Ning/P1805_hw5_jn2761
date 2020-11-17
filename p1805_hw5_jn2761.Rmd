@@ -203,7 +203,8 @@ sample_results%>%
          mu_c=mu_c-1) %>%
   group_by(mu_c,decision) %>%
   filter(decision=="reject") %>%
-  summarise(n_reject=n()) 
+  summarise(n_reject=n()) %>%
+mutate(freq_reject= n_reject/1000)
 
 ```
 
@@ -234,7 +235,44 @@ sample_results%>%
   
 ```
 
- 
+ As the true mean increase, the power of the test increase.
 
+
+```{r}
+sample_results%>%
+  mutate(mu_c=mu_c-1)%>%
+  ggplot(aes(x=as.factor(mu_c), y=mean,fill=mu_c)) + 
+  geom_violin()
+```
+```{r}
+sample_results%>%
+   mutate(decision = ifelse(p.value<0.05,"reject","accept"),
+          mu_c=mu_c-1)%>%
+   filter(decision=="reject") %>%
+  ggplot(aes(x=as.factor(mu_c), y=mean,fill=mu_c)) + 
+  geom_violin()
+```
+
+```{r}
+sample_results%>%
+   mutate( mu_c=mu_c-1)%>%
+  group_by(mu_c) %>%
+  summarise(mean_mu = mean(mean),
+            n=n())%>%
+  ggplot(aes(x=mu_c, y=mean_mu)) + 
+  geom_point()+
+  geom_line()
+
+sample_results%>%
+   mutate(decision = ifelse(p.value<0.05,"reject","accept"),
+          mu_c=mu_c-1)%>%
+   filter(decision=="reject") %>%
+  group_by(mu_c) %>%
+  summarise(mean_mu = mean(mean),
+            n=n())%>%
+  ggplot(aes(x=mu_c, y=mean_mu)) + 
+  geom_point()+
+  geom_line()
+```
 
 
