@@ -79,3 +79,179 @@ df %>%
 Overall, observation value seems to be higher as time pass by for the experimental group, and there seems to no correlation between time and observations for the control group.
 
 
+## problem3
+
+library
+```{r}
+library(broom)
+
+```
+
+
+```{r}
+x=rnorm(n=30,mean=0,sd=5)
+
+df=
+tidy(t.test(rnorm(n=30,mean=0,sd=5))) %>%
+  select(p.value) %>%
+  mutate(x=list(rnorm(n=30,mean=0,sd=5)),
+         mu=0,
+         mean = mean(x[[1]]))%>%
+ select(-x)
+
+
+
+
+  
+
+```
+
+```{r}
+tidy(t.test(rnorm(n=30,mean=0,sd=5))) %>%
+  select(p.value) %>%
+  mutate(x=list(rnorm(n=30,mean=0,sd=5)),
+         mu=0,
+         mean = mean(x[[1]]))%>%
+ select(-x)
+```
+
+
+
+
+```{r}
+
+
+sim_norm = function(size=30, mu, sigma = 5) {
+  
+  
+tidy(t.test(rnorm(n=size, mean = mu, sd = sigma)),mu = 0,conf,leve=0.95,alternative="two.sided") %>%
+  select(p.value) %>%
+  mutate(x=list(rnorm(n=size, mean = mu, sd = sigma)),
+         mean = mean(x[[1]]))%>%
+ select(-x)
+  
+  
+}
+
+
+
+```
+
+
+
+
+```{r}
+
+mu_c =c(1:6)
+output = vector("list", length = 6)
+
+
+
+
+for (i in 1:6) {
+  output[[i]] =  rerun(100, sim_norm(mu = mu_c[i])) %>%
+  bind_rows()}
+
+```
+
+```{r}
+output[[1+1]] = rerun(100, sim_norm(mu = mu_c[1])) %>%
+  bind_rows()
+
+```
+
+```{r}
+
+mu_c =c(1:7)
+output = vector("list", length = 6)
+
+
+for (i in 1:7) {
+  output[[i]] =  rerun(100, sim_norm(mu = mu_c[i]-1)) %>%
+  bind_rows()}
+
+```
+
+
+
+
+```{r}
+
+
+sample_results = 
+tibble(
+  mu_c =c(1:7)
+) %>%
+  mutate(
+    output_list = map(.x = mu_c-1,~rerun(1000,sim_norm(mu=.x))), #function inside of a function #rerun a 100 times
+    estmate_df = map(output_list, bind_rows)
+  )  %>%
+  select(-output_list) %>% #i dont want this anymore 
+  unnest(estmate_df) 
+
+```
+
+```{r}
+sample_results%>%
+  mutate(decision = ifelse(p.value<0.5,"reject","accept"),
+         mu_c=mu_c-1)
+```
+
+```{r}
+sample_results%>%
+  mutate(decision = ifelse(p.value<0.05,"reject","accept"),
+         mu_c=mu_c-1) %>%
+  group_by(mu_c,decision) %>%
+  filter(decision=="reject") %>%
+  summarise(n_reject=n()) 
+
+```
+
+```{r}
+sample_results%>%
+  mutate(decision = ifelse(p.value<0.05,"reject","accept"),
+          mu_c=mu_c-1)%>%
+  group_by(mu_c,decision) %>%
+  filter(decision=="reject") %>%
+  summarise(n_reject=n()) %>%
+  ggplot(aes(x=mu_c, y=n_reject,fill=mu_c)) + 
+  geom_bar(stat = "identity") +
+  scale_x_continuous(
+    breaks = c(0:6))+ 
+  labs(titles = "the number of time null-hypothesis is rejected",
+        x = "true value of μ",
+       y= "number of rejection with null mean=0") +
+  theme(legend.position = "right")
+  
+
+```
+
+
+```{r}
+sample_results%>%
+  mutate(decision = ifelse(p.value<0.05,"reject","accept"),
+          mu_c=mu_c-1)%>%
+  group_by(decision,mu_c) %>%
+  filter(decision=="reject") %>%
+  summarise(n_reject=n()) %>%
+   mutate(freq_reject= n_reject/1000)%>%
+  ggplot(aes(x=mu_c, y=freq_reject,fill=mu_c)) + 
+  geom_bar(stat = "identity") +
+  scale_x_continuous(
+    breaks = c(0:6)) +
+  scale_y_continuous(
+   n.breaks = 20) +
+  labs(titles = "the proportion of time null-hypothesis is rejected",
+        x = "true value of μ",
+       y= " rejection with null mean=0") +
+  theme(legend.position = "right")
+
+
+
+  
+```
+
+ 
+
+
+
