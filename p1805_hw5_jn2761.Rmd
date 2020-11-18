@@ -13,6 +13,10 @@ library(readxl)
 library(janitor)
 library(dplyr)
 library(ggridges)
+library(purrr)
+library(broom)
+library(patchwork)
+
 
 
 knitr::opts_chunk$set(
@@ -33,9 +37,6 @@ scale_color_discrete = scale_color_viridis_d
 scale_fill_discrete =scale_fill_viridis_d
 ```
 
-```{r}
-library(purrr)
-```
 
 
 ## problem 2
@@ -99,10 +100,7 @@ df %>%
 
 ## problem3
 
-loading packages
-```{r}
-library(broom)
-```
+
 
 
 making sure the table I am trying to create work before putting into function
@@ -153,13 +151,13 @@ output = vector("list", length = 6)
 ```
 
 
-testing for loop for simulating 5000 dataset for mu from 0~6
+testing for loop for simulating  10 dataset for mu from 0~6
 
 ```{r}
 
 
 for (i in 1:7) {
-  output[[i]] =  rerun(5000, sim_norm(mu = mu_c[i]-1)) %>%
+  output[[i]] =  rerun(10, sim_norm(mu = mu_c[i]-1)) %>%
   bind_rows()}
 
 ```
@@ -216,6 +214,7 @@ sample_results%>%
 
 ##### plot showing the average estimate of μ̂  on the y axis and the true value of μ on the x axis
 ```{r}
+dist_mean_all=
 sample_results%>%
   ggplot(aes(x=as.factor(mu_c), y=mean,fill=mu_c)) + 
   geom_violin()+
@@ -229,6 +228,8 @@ sample_results%>%
 ##### plot showing the average estimate of μ̂  only in samples for which the null was rejected on the y axis and the true value of μ on the x axis
 
 ```{r}
+
+dist_mean_reject=
 sample_results%>%
    filter(decision=="reject") %>%
   ggplot(aes(x=as.factor(mu_c), y=mean,fill=mu_c)) + 
@@ -240,83 +241,40 @@ sample_results%>%
   
 ```
 
-```{r}
-reject = sample_results %>%
-  filter(decision=="reject")
-```
 
 ```{r}
-sample_results%>%
-  ggplot(aes(x=mean,color=mu_c)) + 
-  geom_density()+
-  facet_wrap(~mu_c)
+dist_mean_all+dist_mean_reject
 ```
 
 
-```{r}
-
-sample_results%>%
-  filter(decision == "reject")%>%
-  ggplot(aes(x=mean,fill=mu_c)) + 
-  geom_density(alpha = .5) +
-  geom_vline(aes(xintercept = mu_c))+
-  facet_wrap(~mu_c)
-```
-
-```{r}
-sample_results%>%
-  filter(mu_c==5 & decision=="reject")
-
-
-sample_results%>%
-  filter(mu_c==5 & decision=="accept")
-```
-
-```{r}
-sample_results%>%
-  ggplot(aes(x=mean,group=mu_c,fill=mu_c)) + 
-  geom_density(alpha = .5) +
-  geom_vline(aes(xintercept = mu_c)) +
-  scale_x_continuous(breaks = c(0:6))
-
-#+
- # facet_wrap(~mu_c)
-```
-```{r}
-sample_results%>%
-  filter(decision == "reject") %>%
-  ggplot(aes(x=mean,group=mu_c,fill=mu_c)) + 
-  geom_density(alpha = .5) +
-  geom_vline(aes(xintercept = mu_c)) +
-  scale_x_continuous(breaks = c(0:6))
-```
 
 ```{r}
 all=
 sample_results%>%
   group_by(mu_c)%>%
-  summarise(mean_mu = mean(mean),n=n()) %>%
-ggplot(aes(x=mu_c, y=mean_mu)) + 
- geom_point(aes(size=n,alpha=0.2)) +
- theme(legend.position = "right")
+  summarise(mean_mu = mean(mean),n=n()) 
 
 
-reject_1=
+reject=
 sample_results%>%
-  group_by(mu_c,decision)%>%
-  summarise(mean_mu = mean(mean),n=n())  %>%
-  filter(decision=="reject") %>%
-  select(-decision)
+    filter(decision =="reject") %>%
+  group_by(mu_c)%>%
+  summarise(mean_mu = mean(mean),n=n())  
 
 ```
 
 ```{r}
 
+accept_reject=
 sample_results%>%
   group_by(mu_c,decision)%>%
   summarise(mean_mu = mean(mean),n=n())  %>%
  ggplot(aes(x=mu_c, y=mean_mu,color=decision)) + 
   geom_point(aes(size=n,alpha=0.2,shape=decision)) +
+  theme(legend.position = "right")+
+labs(titles = " average estimate of μ̂ versus true value of μ between accepted and rejected ",
+        x = "true value of μ",
+       y= " average estimate of μ") +
   theme(legend.position = "right")
 
 
@@ -325,23 +283,24 @@ sample_results%>%
 
 
 ```{r}
+
+all_reject=
 ggplot() + 
   geom_point(data = all, aes(x = mu_c,y=mean_mu,size=n), 
                 color = "blue", alpha = 0.3) + 
-    geom_point(data = reject_1, aes(x = mu_c,y=mean_mu,size=n), 
-                color = "red", alpha = 0.3)  
+    geom_point(data = reject, aes(x = mu_c,y=mean_mu,size=n), 
+                color = "red", alpha = 0.3) +
+  labs(titles = " average estimate of μ̂ versus true value of μ between all and those that are rejected ",
+        x = "true value of μ",
+       y= " average estimate of μ") +
+  theme(legend.position = "right")
+  
 ```
 
 
 ```{r}
-
-
-ggplot() + 
-  geom_density(data = sample_results, aes(x = mean), 
-               fill = "light blue", color = "black", alpha = 0.7) + 
-  geom_density(data = reject, aes(x = mean),
-               fill = "pink", color = "black", alpha = 0.7)+
-  facet_wrap(~mu_c)
+accept_reject+all_reject
 ```
+
 
 
