@@ -2,7 +2,10 @@
 title: "P1805_hw5_jn2761"
 author: "jiaying Ning"
 date: "11/14/2020"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
 ---
 
 
@@ -41,7 +44,7 @@ scale_fill_discrete =scale_fill_viridis_d
 
 ## problem 2
 
-##### Import data
+### Import data
 ```{r, error = TRUE}
 #Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time
 df = 
@@ -83,7 +86,7 @@ exp = df %>%
 ```
 
 
-##### plot 2:spaghetti plot showing observations on each subject over time, and comment on differences between groups.
+### plot 2:spaghetti plot showing observations on each subject over time, and comment on differences between groups.
 
 ```{r}
 df %>%
@@ -185,7 +188,7 @@ tibble(
 
 
 
-##### plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis
+### plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis
 
 ```{r}
 sample_results%>%
@@ -212,41 +215,8 @@ sample_results%>%
  **As the true mean increase, we can see that the proportion of time we reject the test with null (mu=0) also increase. which means that the power of the test increase as the true mean deviate away from the hypothesis mean. **
 
 
-##### plot showing the average estimate of μ̂  on the y axis and the true value of μ on the x axis
-```{r}
-dist_mean_all=
-sample_results%>%
-  ggplot(aes(x=as.factor(mu_c), y=mean,fill=mu_c)) + 
-  geom_violin()+
-  labs(titles = "true μ versus average estimate of μ for all",
-        x = " the true value of μ",
-       y= " average estimate of μ") +
-  theme(legend.position = "right")
-  
-```
 
-##### plot showing the average estimate of μ̂  only in samples for which the null was rejected on the y axis and the true value of μ on the x axis
-
-```{r}
-
-dist_mean_reject=
-sample_results%>%
-   filter(decision=="reject") %>%
-  ggplot(aes(x=as.factor(mu_c), y=mean,fill=mu_c)) + 
-  geom_violin() +
-  labs(titles = "true μ versus average estimate of μ for rejected",
-        x = " the true value of μ",
-       y= " average estimate of μ") +
-  theme(legend.position = "right")
-  
-```
-
-
-```{r}
-dist_mean_all+dist_mean_reject
-```
-
-
+### plot showing the average estimate of μ̂  in all samples and samples for which the null was rejected on the y axis and the true value of μ on the x axis
 
 ```{r}
 all=
@@ -262,33 +232,12 @@ sample_results%>%
   summarise(mean_mu = mean(mean),n=n())  
 
 ```
-
 ```{r}
 
-accept_reject=
-sample_results%>%
-  group_by(mu_c,decision)%>%
-  summarise(mean_mu = mean(mean),n=n())  %>%
- ggplot(aes(x=mu_c, y=mean_mu,color=decision)) + 
-  geom_point(aes(size=n,alpha=0.2,shape=decision)) +
-  theme(legend.position = "right")+
-labs(titles = " average estimate of μ̂ versus true value of μ between accepted and rejected ",
-        x = "true value of μ",
-       y= " average estimate of μ") +
-  theme(legend.position = "right")
-
-
-
-```
-
-
-```{r}
-
-all_reject=
 ggplot() + 
-  geom_point(data = all, aes(x = mu_c,y=mean_mu,size=n), 
+  geom_point(data = all, aes(x = mu_c,y=mean_mu), 
                 color = "blue", alpha = 0.3) + 
-    geom_point(data = reject, aes(x = mu_c,y=mean_mu,size=n), 
+    geom_point(data = reject, aes(x = mu_c,y=mean_mu), 
                 color = "red", alpha = 0.3) +
   labs(titles = " average estimate of μ̂ versus true value of μ between all and those that are rejected ",
         x = "true value of μ",
@@ -297,10 +246,8 @@ ggplot() +
   
 ```
 
+#### Is the sample average of μ̂  across tests for which the null is rejected approximately equal to the true value of μ? Why or why not?
 
-```{r}
-accept_reject+all_reject
-```
-
+The sample average of mu across tests for which the null is rejected is not equal to true value of mu for mu equal to 0 and 1, but it is approxitemently equal for mu equal to 2 to 6. This is because since we have a null hypothesis of mu equal to 0, we will be more likely reject sample that have means far away from 0. Thus for sample that have true mean equal to 0 and 1, we will be more likely to reject samples that have deviated sample mean, whereas for sample that have much higher true mu value, most of the sample mean will be consider as deviated means for null hypohthesis mu = 0, thus even for the rejected sample, their mean will be similar to the true mean.
 
 
