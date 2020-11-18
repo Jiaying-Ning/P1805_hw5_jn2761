@@ -40,21 +40,22 @@ library(purrr)
 
 ## problem 2
 
-
+##### Import data
 ```{r, error = TRUE}
+#Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time
 df = 
   tibble(
-    path = list.files("data"),
+    path = list.files("data"), #created a dataframe containing all file names
   ) %>% 
   mutate(
     path = str_c("data/", path),
-    data = map(path,read.csv)) %>%
+    data = map(path,read.csv)) %>% #Iterate over file names and read in data for each subject using purrr::map and saving the result as a new variable in the dataframe
   unnest() %>% 
-   mutate(path=gsub("data/","",path),
+   mutate(path=gsub("data/","",path), #reformat data
           path=gsub(".csv","",path)) %>%
    separate(path, c("control_arm","subject_id"), sep = "([_])") %>%
   relocate(subject_id,control_arm) %>%
-   pivot_longer(
+   pivot_longer( #Tidy the result; manipulate file names to include control arm and subject ID
     week_1:week_8,
     names_to = "week", 
     names_prefix = "week_",
@@ -63,11 +64,8 @@ df =
 
 ```
 
+##### plot 1:spaghetti plot showing observations on each subject over time, and comment on differences between groups.
 
-```{r}
-df %>%
-  filter(control_arm =="con") 
-```
 ```{r}
 df %>%
   group_by(subject_id)%>%
@@ -76,36 +74,38 @@ df %>%
   stat_smooth(aes(group = 1),method = "lm", se = FALSE)+
   facet_grid(. ~ control_arm)
 ```
-Overall, observation value seems to be higher as time pass by for the experimental group, and there seems to no correlation between time and observations for the control group.
+
+```{r}
+exp = df %>%
+  group_by(control_arm,subject_id)%>%
+  filter(control_arm=="exp")
+```
+
+
+##### plot 2:spaghetti plot showing observations on each subject over time, and comment on differences between groups.
+
+```{r}
+df %>%
+  group_by(control_arm,subject_id)%>%
+  filter(control_arm=="con")%>%
+  ggplot(aes(x=week,y=observation,group=subject_id,color=control_arm))+
+  geom_line() +
+  geom_line(aes(x=exp$week,y=exp$observation,group=exp$subject_id,color=exp$control_arm))
+```
+
+
+**Overall, observation value seems to be higher as time pass by for the experimental group, and there seems to no correlation between time and observations for the control group.**
 
 
 ## problem3
 
-library
+loading packages
 ```{r}
 library(broom)
-
 ```
 
 
-```{r}
-x=rnorm(n=30,mean=0,sd=5)
-
-df=
-tidy(t.test(rnorm(n=30,mean=0,sd=5))) %>%
-  select(p.value) %>%
-  mutate(x=list(rnorm(n=30,mean=0,sd=5)),
-         mu=0,
-         mean = mean(x[[1]]))%>%
- select(-x)
-
-
-
-
-  
-
-```
-
+making sure the table I am trying to create work before putting into function
 ```{r}
 tidy(t.test(rnorm(n=30,mean=0,sd=5))) %>%
   select(p.value) %>%
@@ -115,9 +115,7 @@ tidy(t.test(rnorm(n=30,mean=0,sd=5))) %>%
  select(-x)
 ```
 
-
-
-
+creating function that produce table that shows p.value, true mu, and sample mean for different true mu.
 ```{r}
 
 
@@ -134,46 +132,40 @@ tidy(t.test(rnorm(n=size, mean = mu, sd = sigma)),mu = 0,conf,leve=0.95,alternat
 }
 
 
-
 ```
 
 
 
 
-```{r}
 
-mu_c =c(1:6)
-output = vector("list", length = 6)
-
-
-
-
-for (i in 1:6) {
-  output[[i]] =  rerun(100, sim_norm(mu = mu_c[i])) %>%
-  bind_rows()}
-
-```
-
-```{r}
-output[[1+1]] = rerun(100, sim_norm(mu = mu_c[1])) %>%
-  bind_rows()
-
-```
-
+try to simulate data, sumulate data with mu=0 first, created 5000 dataset with true mean=0
 ```{r}
 
 mu_c =c(1:7)
 output = vector("list", length = 6)
 
 
+  output[[1]] =  rerun(5000, sim_norm(mu = mu_c[1]-1)) %>%
+  bind_rows()
+  
+  output[[1]] 
+
+```
+
+
+testing for loop for simulating 5000 dataset for mu from 0~6
+
+```{r}
+
+
 for (i in 1:7) {
-  output[[i]] =  rerun(100, sim_norm(mu = mu_c[i]-1)) %>%
+  output[[i]] =  rerun(5000, sim_norm(mu = mu_c[i]-1)) %>%
   bind_rows()}
 
 ```
 
 
-
+creating datframe containing true mean(0-6), p-value for each simulated dataset,and sample mean
 
 ```{r}
 
@@ -187,38 +179,22 @@ tibble(
     estmate_df = map(output_list, bind_rows)
   )  %>%
   select(-output_list) %>% #i dont want this anymore 
-  unnest(estmate_df) 
-
-```
-
-```{r}
-sample_results%>%
-  mutate(decision = ifelse(p.value<0.5,"reject","accept"),
+  unnest(estmate_df) %>%
+  mutate(decision = ifelse(p.value<0.05,"reject","accept"), #adding categorical variable decision to mark whether each sample is rejected or accepted from null
          mu_c=mu_c-1)
-```
-
-```{r}
-sample_results%>%
-  mutate(decision = ifelse(p.value<0.05,"reject","accept"),
-         mu_c=mu_c-1) %>%
-  group_by(mu_c,decision) %>%
-  filter(decision=="reject") %>%
-  summarise(n_reject=n()) %>%
-mutate(freq_reject= n_reject/1000)
 
 ```
 
 
 
+##### plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis
 
 ```{r}
 sample_results%>%
-  mutate(decision = ifelse(p.value<0.05,"reject","accept"),
-          mu_c=mu_c-1)%>%
   group_by(decision,mu_c) %>%
   filter(decision=="reject") %>%
   summarise(n_reject=n()) %>%
-   mutate(freq_reject= n_reject/1000)%>%
+   mutate(freq_reject= n_reject/5000)%>%
   ggplot(aes(x=mu_c, y=freq_reject,fill=mu_c)) + 
   geom_bar(stat = "identity") +
   scale_x_continuous(
@@ -235,44 +211,137 @@ sample_results%>%
   
 ```
 
- As the true mean increase, the power of the test increase.
+ **As the true mean increase, we can see that the proportion of time we reject the test with null (mu=0) also increase. which means that the power of the test increase as the true mean deviate away from the hypothesis mean. **
 
+
+##### plot showing the average estimate of μ̂  on the y axis and the true value of μ on the x axis
+```{r}
+sample_results%>%
+  ggplot(aes(x=as.factor(mu_c), y=mean,fill=mu_c)) + 
+  geom_violin()+
+  labs(titles = "true μ versus average estimate of μ for all",
+        x = " the true value of μ",
+       y= " average estimate of μ") +
+  theme(legend.position = "right")
+  
+```
+
+##### plot showing the average estimate of μ̂  only in samples for which the null was rejected on the y axis and the true value of μ on the x axis
 
 ```{r}
 sample_results%>%
-  mutate(mu_c=mu_c-1)%>%
+   filter(decision=="reject") %>%
   ggplot(aes(x=as.factor(mu_c), y=mean,fill=mu_c)) + 
-  geom_violin()
+  geom_violin() +
+  labs(titles = "true μ versus average estimate of μ for rejected",
+        x = " the true value of μ",
+       y= " average estimate of μ") +
+  theme(legend.position = "right")
+  
+```
+
+```{r}
+reject = sample_results %>%
+  filter(decision=="reject")
+```
+
+```{r}
+sample_results%>%
+  ggplot(aes(x=mean,color=mu_c)) + 
+  geom_density()+
+  facet_wrap(~mu_c)
+```
+
+
+```{r}
+
+sample_results%>%
+  filter(decision == "reject")%>%
+  ggplot(aes(x=mean,fill=mu_c)) + 
+  geom_density(alpha = .5) +
+  geom_vline(aes(xintercept = mu_c))+
+  facet_wrap(~mu_c)
+```
+
+```{r}
+sample_results%>%
+  filter(mu_c==5 & decision=="reject")
+
+
+sample_results%>%
+  filter(mu_c==5 & decision=="accept")
+```
+
+```{r}
+sample_results%>%
+  ggplot(aes(x=mean,group=mu_c,fill=mu_c)) + 
+  geom_density(alpha = .5) +
+  geom_vline(aes(xintercept = mu_c)) +
+  scale_x_continuous(breaks = c(0:6))
+
+#+
+ # facet_wrap(~mu_c)
 ```
 ```{r}
 sample_results%>%
-   mutate(decision = ifelse(p.value<0.05,"reject","accept"),
-          mu_c=mu_c-1)%>%
-   filter(decision=="reject") %>%
-  ggplot(aes(x=as.factor(mu_c), y=mean,fill=mu_c)) + 
-  geom_violin()
+  filter(decision == "reject") %>%
+  ggplot(aes(x=mean,group=mu_c,fill=mu_c)) + 
+  geom_density(alpha = .5) +
+  geom_vline(aes(xintercept = mu_c)) +
+  scale_x_continuous(breaks = c(0:6))
 ```
 
 ```{r}
+all=
 sample_results%>%
-   mutate( mu_c=mu_c-1)%>%
-  group_by(mu_c) %>%
-  summarise(mean_mu = mean(mean),
-            n=n())%>%
-  ggplot(aes(x=mu_c, y=mean_mu)) + 
-  geom_point()+
-  geom_line()
+  group_by(mu_c)%>%
+  summarise(mean_mu = mean(mean),n=n()) %>%
+ggplot(aes(x=mu_c, y=mean_mu)) + 
+ geom_point(aes(size=n,alpha=0.2)) +
+ theme(legend.position = "right")
+
+
+reject_1=
+sample_results%>%
+  group_by(mu_c,decision)%>%
+  summarise(mean_mu = mean(mean),n=n())  %>%
+  filter(decision=="reject") %>%
+  select(-decision)
+
+```
+
+```{r}
 
 sample_results%>%
-   mutate(decision = ifelse(p.value<0.05,"reject","accept"),
-          mu_c=mu_c-1)%>%
-   filter(decision=="reject") %>%
-  group_by(mu_c) %>%
-  summarise(mean_mu = mean(mean),
-            n=n())%>%
-  ggplot(aes(x=mu_c, y=mean_mu)) + 
-  geom_point()+
-  geom_line()
+  group_by(mu_c,decision)%>%
+  summarise(mean_mu = mean(mean),n=n())  %>%
+ ggplot(aes(x=mu_c, y=mean_mu,color=decision)) + 
+  geom_point(aes(size=n,alpha=0.2,shape=decision)) +
+  theme(legend.position = "right")
+
+
+
+```
+
+
+```{r}
+ggplot() + 
+  geom_point(data = all, aes(x = mu_c,y=mean_mu,size=n), 
+                color = "blue", alpha = 0.3) + 
+    geom_point(data = reject_1, aes(x = mu_c,y=mean_mu,size=n), 
+                color = "red", alpha = 0.3)  
+```
+
+
+```{r}
+
+
+ggplot() + 
+  geom_density(data = sample_results, aes(x = mean), 
+               fill = "light blue", color = "black", alpha = 0.7) + 
+  geom_density(data = reject, aes(x = mean),
+               fill = "pink", color = "black", alpha = 0.7)+
+  facet_wrap(~mu_c)
 ```
 
 
