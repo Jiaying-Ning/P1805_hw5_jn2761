@@ -68,7 +68,7 @@ df =
 
 ```
 
-##### plot 1:spaghetti plot showing observations on each subject over time, and comment on differences between groups.
+### plot 1:spaghetti plot showing observations on each subject over time, and comment on differences between groups.
 
 ```{r}
 df %>%
@@ -242,12 +242,16 @@ ggplot() +
   labs(titles = " average estimate of μ̂ versus true value of μ between all and those that are rejected ",
         x = "true value of μ",
        y= " average estimate of μ") +
-  theme(legend.position = "right")
+  theme(legend.position = "right")+
+  scale_x_continuous(
+    breaks = c(0:6))+
+  scale_y_continuous(
+    breaks = c(0:6))
   
 ```
 
 #### Is the sample average of μ̂  across tests for which the null is rejected approximately equal to the true value of μ? Why or why not?
 
-The sample average of mu across tests for which the null is rejected is not equal to true value of mu for mu equal to 0 and 1, but it is approxitemently equal for mu equal to 2 to 6. This is because since we have a null hypothesis of mu equal to 0, we will be more likely reject sample that have means far away from 0. Thus for sample that have true mean equal to 0 and 1, we will be more likely to reject samples that have deviated sample mean, whereas for sample that have much higher true mu value, most of the sample mean will be consider as deviated means for null hypohthesis mu = 0, thus even for the rejected sample, their mean will be similar to the true mean.
+The sample average of mu across tests for which the null is rejected is not equal to true value of mu for mu equal to 0 and 1, but it is approxitemently equal for mu equal to 2 to 6. This is because since we have a null hypothesis of mu equal to 0, we will be more likely reject sample that have means far away from 0. Thus for sample that have true mean equal to 0 and 1(more obvious for true mu=0), we will be more likely to reject samples that have deviated sample mean, whereas for sample that have much higher true mu value, most of the sample mean will be consider as deviated means for null hypohthesis mu = 0, thus even for the rejected sample, their mean will be similar to the true mean.
 
 
